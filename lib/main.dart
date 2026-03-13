@@ -86,6 +86,7 @@ class _WeatherStoneHomePageState extends State<WeatherStoneHomePage>
   String? _weatherError;
   Accessory _selectedAccessory = accessories.first;
   bool _forceWidgetAnimation = false;
+  String? _weatherTestPresetId;
   bool _loadingWeather = true;
   bool _showingGuide = false;
   bool _isApplyingAccessory = false;
@@ -101,7 +102,18 @@ class _WeatherStoneHomePageState extends State<WeatherStoneHomePage>
     _adService = AdService()..preloadInterstitial();
     _selectedAccessory = widget.storage.loadAccessory();
     _forceWidgetAnimation = widget.storage.forceWidgetAnimation;
+    _weatherTestPresetId = widget.storage.weatherTestPresetId;
     _boot();
+  }
+
+  WeatherSnapshot? get _displayWeather {
+    final preset = weatherTestPresetsById[_weatherTestPresetId];
+    if (preset == null) {
+      return _weather;
+    }
+    return preset.buildSnapshot(
+      locationLabel: _weather?.locationLabel ?? '테스트 위치',
+    );
   }
 
   Future<void> _boot() async {
@@ -168,15 +180,13 @@ class _WeatherStoneHomePageState extends State<WeatherStoneHomePage>
   }
 
   Future<void> _syncWidget() async {
-    final weather = _weather;
+    final weather = _displayWeather;
     if (weather == null || !(Platform.isAndroid || Platform.isIOS)) {
       return;
     }
 
-    final shouldAnimate = _forceWidgetAnimation || weather.shouldAnimateWidget;
-    final widgetPhases = shouldAnimate
-        ? _widgetFramePhases
-        : List<double>.filled(_widgetFramePhases.length, 0.25);
+    const shouldAnimate = true;
+    final widgetPhases = _widgetFramePhases;
 
     String? firstFramePath;
     for (var i = 0; i < widgetPhases.length; i++) {
@@ -217,6 +227,7 @@ class _WeatherStoneHomePageState extends State<WeatherStoneHomePage>
           ? '${weather.widgetStatus} · 테스트 흔들림'
           : weather.widgetStatus,
     );
+    await HomeWidget.saveWidgetData<String>('widget_state', weather.widgetStateKey);
     await HomeWidget.saveWidgetData<String>(
       'accessory_label',
       _selectedAccessory.name,
@@ -343,7 +354,7 @@ class _WeatherStoneHomePageState extends State<WeatherStoneHomePage>
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final weather = _weather;
+    final weather = _displayWeather;
 
     return Scaffold(
       body: DecoratedBox(
@@ -615,6 +626,63 @@ class _WeatherStoneHomePageState extends State<WeatherStoneHomePage>
             ],
           ),
         ),
+        const SizedBox(height: 14),
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: const Color(0xFF101820),
+            borderRadius: BorderRadius.circular(22),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                '날씨 테스트 선택',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                '앱과 홈 위젯에 적용할 테스트 날씨를 고를 수 있어요. 실제 날씨로 돌아가려면 "실제 날씨"를 누르면 됩니다.',
+                style: TextStyle(
+                  color: Colors.white.withValues(alpha: 0.68),
+                  height: 1.4,
+                ),
+              ),
+              const SizedBox(height: 14),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  ChoiceChip(
+                    label: const Text('실제 날씨'),
+                    selected: _weatherTestPresetId == null,
+                    onSelected: (_) => _setWeatherTestPreset(null),
+                  ),
+                  for (final preset in weatherTestPresets)
+                    ChoiceChip(
+                      label: Text(preset.label),
+                      selected: _weatherTestPresetId == preset.id,
+                      onSelected: (_) => _setWeatherTestPreset(preset.id),
+                    ),
+                ],
+              ),
+              if (_weatherTestPresetId != null) ...[
+                const SizedBox(height: 12),
+                Text(
+                  '현재는 테스트 날씨가 적용 중이라, 새로고침해도 선택한 상태가 앱과 위젯에 유지됩니다.',
+                  style: TextStyle(
+                    color: const Color(0xFFE6D5B3).withValues(alpha: 0.9),
+                    height: 1.4,
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
       ],
     );
   }
@@ -626,6 +694,17 @@ class _WeatherStoneHomePageState extends State<WeatherStoneHomePage>
     }
     setState(() {
       _forceWidgetAnimation = value;
+    });
+    await _syncWidget();
+  }
+
+  Future<void> _setWeatherTestPreset(String? value) async {
+    await widget.storage.setWeatherTestPresetId(value);
+    if (!mounted) {
+      return;
+    }
+    setState(() {
+      _weatherTestPresetId = value;
     });
     await _syncWidget();
   }
@@ -2081,6 +2160,7 @@ class AppStorage {
   static const _guideSeenKey = 'guide_seen';
   static const _accessoryKey = 'selected_accessory';
   static const _forceWidgetAnimationKey = 'force_widget_animation';
+  static const _weatherTestPresetKey = 'weather_test_preset';
 
   final SharedPreferences _preferences;
 
@@ -2088,6 +2168,9 @@ class AppStorage {
 
   bool get forceWidgetAnimation =>
       _preferences.getBool(_forceWidgetAnimationKey) ?? false;
+
+  String? get weatherTestPresetId =>
+      _preferences.getString(_weatherTestPresetKey);
 
   Future<void> markGuideSeen() async {
     await _preferences.setBool(_guideSeenKey, true);
@@ -2107,6 +2190,14 @@ class AppStorage {
 
   Future<void> setForceWidgetAnimation(bool value) async {
     await _preferences.setBool(_forceWidgetAnimationKey, value);
+  }
+
+  Future<void> setWeatherTestPresetId(String? value) async {
+    if (value == null) {
+      await _preferences.remove(_weatherTestPresetKey);
+      return;
+    }
+    await _preferences.setString(_weatherTestPresetKey, value);
   }
 }
 
@@ -2328,6 +2419,31 @@ class WeatherSnapshot {
 
   bool get shouldAnimateWidget => isWindy && !isTyphoon;
 
+  String get widgetStateKey {
+    if (isSevereTyphoon) {
+      return 'severe_typhoon';
+    }
+    if (isTyphoon) {
+      return 'typhoon';
+    }
+    if (isSnowy) {
+      return 'snow';
+    }
+    if (isRainy) {
+      return 'rain';
+    }
+    if (isFoggy) {
+      return 'fog';
+    }
+    if (isOverheated) {
+      return 'heat';
+    }
+    if (isWindy) {
+      return 'windy';
+    }
+    return 'calm';
+  }
+
   String get temperatureLabel => '${temperature.round()}°C';
 
   String get windLabel => '${windSpeed.toStringAsFixed(1)} m/s';
@@ -2391,6 +2507,127 @@ class WeatherSnapshot {
         '그래서 돌 상태는 "$statusHeadline" 쪽으로 연출됩니다.';
   }
 }
+
+class WeatherTestPreset {
+  const WeatherTestPreset({
+    required this.id,
+    required this.label,
+    required this.temperature,
+    required this.apparentTemperature,
+    required this.humidity,
+    required this.weatherCode,
+    required this.windSpeed,
+    required this.isDay,
+  });
+
+  final String id;
+  final String label;
+  final double temperature;
+  final double apparentTemperature;
+  final int humidity;
+  final int weatherCode;
+  final double windSpeed;
+  final bool isDay;
+
+  WeatherSnapshot buildSnapshot({required String locationLabel}) {
+    return WeatherSnapshot(
+      locationLabel: locationLabel,
+      temperature: temperature,
+      apparentTemperature: apparentTemperature,
+      humidity: humidity,
+      weatherCode: weatherCode,
+      windSpeed: windSpeed,
+      isDay: isDay,
+    );
+  }
+}
+
+const weatherTestPresets = [
+  WeatherTestPreset(
+    id: 'calm',
+    label: '고요함',
+    temperature: 18,
+    apparentTemperature: 18,
+    humidity: 46,
+    weatherCode: 1,
+    windSpeed: 2.2,
+    isDay: true,
+  ),
+  WeatherTestPreset(
+    id: 'windy',
+    label: '바람',
+    temperature: 16,
+    apparentTemperature: 15,
+    humidity: 52,
+    weatherCode: 1,
+    windSpeed: 14.2,
+    isDay: true,
+  ),
+  WeatherTestPreset(
+    id: 'rain',
+    label: '비',
+    temperature: 12,
+    apparentTemperature: 10,
+    humidity: 88,
+    weatherCode: 61,
+    windSpeed: 5.1,
+    isDay: true,
+  ),
+  WeatherTestPreset(
+    id: 'snow',
+    label: '눈',
+    temperature: -2,
+    apparentTemperature: -5,
+    humidity: 92,
+    weatherCode: 73,
+    windSpeed: 4.4,
+    isDay: true,
+  ),
+  WeatherTestPreset(
+    id: 'fog',
+    label: '안개',
+    temperature: 9,
+    apparentTemperature: 8,
+    humidity: 97,
+    weatherCode: 45,
+    windSpeed: 1.5,
+    isDay: true,
+  ),
+  WeatherTestPreset(
+    id: 'heat',
+    label: '폭염',
+    temperature: 35,
+    apparentTemperature: 37,
+    humidity: 44,
+    weatherCode: 1,
+    windSpeed: 3.3,
+    isDay: true,
+  ),
+  WeatherTestPreset(
+    id: 'typhoon',
+    label: '태풍',
+    temperature: 24,
+    apparentTemperature: 26,
+    humidity: 84,
+    weatherCode: 95,
+    windSpeed: 26,
+    isDay: false,
+  ),
+  WeatherTestPreset(
+    id: 'severe_typhoon',
+    label: '초강풍',
+    temperature: 25,
+    apparentTemperature: 27,
+    humidity: 90,
+    weatherCode: 99,
+    windSpeed: 35,
+    isDay: false,
+  ),
+];
+
+final weatherTestPresetsById = {
+  for (final preset in weatherTestPresets) preset.id: preset,
+};
 
 class WeatherException implements Exception {
   const WeatherException(this.message);

@@ -49,12 +49,75 @@
             android:visibility="gone" />
 
         <ProgressBar
-            android:id="@+id/widget_anim"
+            android:id="@+id/widget_anim_calm"
             style="?android:attr/progressBarStyleLarge"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:indeterminate="true"
-            android:indeterminateDrawable="@drawable/widget_stone_animation"
+            android:indeterminateDrawable="@drawable/widget_stone_animation_calm"
+            android:visibility="gone" />
+
+        <ProgressBar
+            android:id="@+id/widget_anim_windy"
+            style="?android:attr/progressBarStyleLarge"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:indeterminate="true"
+            android:indeterminateDrawable="@drawable/widget_stone_animation_windy"
+            android:visibility="gone" />
+
+        <ProgressBar
+            android:id="@+id/widget_anim_rain"
+            style="?android:attr/progressBarStyleLarge"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:indeterminate="true"
+            android:indeterminateDrawable="@drawable/widget_stone_animation_rain"
+            android:visibility="gone" />
+
+        <ProgressBar
+            android:id="@+id/widget_anim_snow"
+            style="?android:attr/progressBarStyleLarge"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:indeterminate="true"
+            android:indeterminateDrawable="@drawable/widget_stone_animation_snow"
+            android:visibility="gone" />
+
+        <ProgressBar
+            android:id="@+id/widget_anim_fog"
+            style="?android:attr/progressBarStyleLarge"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:indeterminate="true"
+            android:indeterminateDrawable="@drawable/widget_stone_animation_fog"
+            android:visibility="gone" />
+
+        <ProgressBar
+            android:id="@+id/widget_anim_heat"
+            style="?android:attr/progressBarStyleLarge"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:indeterminate="true"
+            android:indeterminateDrawable="@drawable/widget_stone_animation_heat"
+            android:visibility="gone" />
+
+        <ProgressBar
+            android:id="@+id/widget_anim_typhoon"
+            style="?android:attr/progressBarStyleLarge"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:indeterminate="true"
+            android:indeterminateDrawable="@drawable/widget_stone_animation_typhoon"
+            android:visibility="gone" />
+
+        <ProgressBar
+            android:id="@+id/widget_anim_severe_typhoon"
+            style="?android:attr/progressBarStyleLarge"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:indeterminate="true"
+            android:indeterminateDrawable="@drawable/widget_stone_animation_severe_typhoon"
             android:visibility="gone" />
 
         <TextView

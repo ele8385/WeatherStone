@@ -18,6 +18,7 @@ class WeatherStoneWidgetProvider : HomeWidgetProvider() {
   ) {
     val animateWidget = widgetData.getBoolean(KEY_ANIMATE_WIDGET, false)
     val imagePath = widgetData.getString("stone_image", null)
+    val widgetState = widgetData.getString(KEY_WIDGET_STATE, "calm") ?: "calm"
 
     appWidgetIds.forEach { widgetId ->
       val views = RemoteViews(context.packageName, R.layout.weatherstone_widget).apply {
@@ -41,8 +42,10 @@ class WeatherStoneWidgetProvider : HomeWidgetProvider() {
           widgetData.getString("accessory_label", "맨돌") ?: "맨돌",
         )
 
+        hideAllAnimations(this)
+
         if (animateWidget) {
-          setViewVisibility(R.id.widget_anim, View.VISIBLE)
+          setViewVisibility(animationViewId(widgetState), View.VISIBLE)
           setViewVisibility(R.id.widget_image, View.GONE)
           setViewVisibility(R.id.widget_placeholder, View.GONE)
         } else if (imagePath != null) {
@@ -50,16 +53,13 @@ class WeatherStoneWidgetProvider : HomeWidgetProvider() {
           if (bitmap != null) {
             setImageViewBitmap(R.id.widget_image, bitmap)
             setViewVisibility(R.id.widget_image, View.VISIBLE)
-            setViewVisibility(R.id.widget_anim, View.GONE)
             setViewVisibility(R.id.widget_placeholder, View.GONE)
           } else {
             setViewVisibility(R.id.widget_image, View.GONE)
-            setViewVisibility(R.id.widget_anim, View.GONE)
             setViewVisibility(R.id.widget_placeholder, View.VISIBLE)
           }
         } else {
           setViewVisibility(R.id.widget_image, View.GONE)
-          setViewVisibility(R.id.widget_anim, View.GONE)
           setViewVisibility(R.id.widget_placeholder, View.VISIBLE)
         }
       }
@@ -70,5 +70,33 @@ class WeatherStoneWidgetProvider : HomeWidgetProvider() {
 
   companion object {
     private const val KEY_ANIMATE_WIDGET = "animate_widget"
+    private const val KEY_WIDGET_STATE = "widget_state"
+
+    private fun hideAllAnimations(views: RemoteViews) {
+      val ids =
+        intArrayOf(
+          R.id.widget_anim_calm,
+          R.id.widget_anim_windy,
+          R.id.widget_anim_rain,
+          R.id.widget_anim_snow,
+          R.id.widget_anim_fog,
+          R.id.widget_anim_heat,
+          R.id.widget_anim_typhoon,
+          R.id.widget_anim_severe_typhoon,
+        )
+      ids.forEach { id -> views.setViewVisibility(id, View.GONE) }
+    }
+
+    private fun animationViewId(state: String): Int =
+      when (state) {
+        "windy" -> R.id.widget_anim_windy
+        "rain" -> R.id.widget_anim_rain
+        "snow" -> R.id.widget_anim_snow
+        "fog" -> R.id.widget_anim_fog
+        "heat" -> R.id.widget_anim_heat
+        "typhoon" -> R.id.widget_anim_typhoon
+        "severe_typhoon" -> R.id.widget_anim_severe_typhoon
+        else -> R.id.widget_anim_calm
+      }
   }
 }

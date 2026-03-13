@@ -165,15 +165,22 @@ def render_base_stone(
                 draw_disc(frame, stone_center[0] + flake_x, stone_center[1] + flake_y, 4.2, (255, 255, 255, 190))
 
         if fog:
-            for y in range(int(stone_center[1] - 84), int(stone_center[1] + 96), 8):
-                alpha = 16 + int((1.0 - abs(y - stone_center[1]) / 110.0) * 24)
-                draw_line(
-                    frame,
-                    (stone_center[0] - 116, y),
-                    (stone_center[0] + 116, y + 4),
-                    6.0,
-                    (236, 239, 244, alpha),
-                )
+            mist_centers = [
+                (-58, -10, 34, 24),
+                (-14, -24, 38, 26),
+                (34, -8, 32, 22),
+                (-36, 26, 30, 20),
+                (18, 30, 34, 24),
+            ]
+            for offset_x, offset_y, radius, base_alpha in mist_centers:
+                for layer in range(6):
+                    draw_disc(
+                        frame,
+                        stone_center[0] + offset_x + layer * 2,
+                        stone_center[1] + offset_y + math.sin(layer * 0.8) * 3,
+                        radius - layer * 3,
+                        (238, 241, 245, max(6, base_alpha - layer * 4)),
+                    )
 
     if severe:
         cracks = [
