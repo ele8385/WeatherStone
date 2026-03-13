@@ -11,7 +11,8 @@ FRAME_DURATION_MS = 55
 WIDTH = 384
 HEIGHT = 384
 OUTPUT_DIR = "android/app/src/main/res/drawable-nodpi"
-OUTPUT_PREFIX = "widget_stone_png_frame_"
+OUTPUT_PREFIX = "widget_stone_windy_frame_"
+SOURCE_SEQUENCE_DIR = "widget_assets/android_widget_png/windy_sequence"
 
 
 def clamp(value, low, high):
@@ -268,10 +269,13 @@ def build_animation_xml():
 
 def main():
     os.makedirs(OUTPUT_DIR, exist_ok=True)
+    os.makedirs(SOURCE_SEQUENCE_DIR, exist_ok=True)
     for index in range(FRAME_COUNT):
         frame = render_frame(index)
-        filename = f"{OUTPUT_PREFIX}{index:02d}.png"
-        write_png(os.path.join(OUTPUT_DIR, filename), WIDTH, HEIGHT, frame)
+        export_name = f"{OUTPUT_PREFIX}{index:02d}.png"
+        source_name = f"frame_{index:02d}.png"
+        write_png(os.path.join(OUTPUT_DIR, export_name), WIDTH, HEIGHT, frame)
+        write_png(os.path.join(SOURCE_SEQUENCE_DIR, source_name), WIDTH, HEIGHT, frame)
 
     animation_path = "android/app/src/main/res/drawable/widget_stone_animation.xml"
     with open(animation_path, "w", encoding="utf-8") as file:
