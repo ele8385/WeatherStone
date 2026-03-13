@@ -38,6 +38,14 @@ Developer helpers
 - `python3 tool/generate_widget_png_sequence.py` regenerates the current placeholder windy sequence into both:
   - `widget_assets/android_widget_png/windy_sequence/`
   - `android/app/src/main/res/drawable-nodpi/`
+- `python3 tool/generate_widget_weather_pngs.py` generates placeholder static PNGs for:
+  - `calm/`
+  - `rain/`
+  - `snow/`
+  - `fog/`
+  - `heat/`
+  - `typhoon/`
+  - `severe_typhoon/`
 - `python3 tool/export_widget_png_assets.py` copies hand-made PNG assets from `widget_assets/` into Android `res`.
 
 Current app wiring
@@ -45,4 +53,5 @@ Current app wiring
 - Android widget animation list: `android/app/src/main/res/drawable/widget_stone_animation.xml`
 - Android exported frame folder: `android/app/src/main/res/drawable-nodpi/`
 - PNG sequence generator: `tool/generate_widget_png_sequence.py`
+- Static weather PNG generator: `tool/generate_widget_weather_pngs.py`
 - PNG exporter: `tool/export_widget_png_assets.py`
