@@ -18,19 +18,88 @@ DRAWABLE_NODPI_DIR = Path("android/app/src/main/res/drawable-nodpi")
 
 
 STATE_CONFIGS = {
-    "calm": {"frames": 12, "duration": 140, "swing": 0.018, "bob": 1.8, "flex": 6.0},
-    "windy": {"frames": 24, "duration": 55, "swing": 0.29, "bob": 5.0, "flex": 22.0},
-    "rain": {"frames": 12, "duration": 135, "swing": 0.022, "bob": 2.0, "flex": 6.5, "wet": True},
-    "snow": {"frames": 12, "duration": 145, "swing": 0.02, "bob": 1.6, "flex": 5.5, "snow": True},
-    "fog": {"frames": 12, "duration": 150, "swing": 0.017, "bob": 1.4, "flex": 5.0, "fog": True},
-    "heat": {"frames": 12, "duration": 138, "swing": 0.021, "bob": 2.1, "flex": 6.0, "hot": True},
-    "typhoon": {"frames": 12, "duration": 120, "swing": 0.035, "bob": 1.2, "flex": 11.0, "missing": True},
+    "calm": {
+        "frames": 14,
+        "duration": 160,
+        "swing": 0.012,
+        "bob": 1.0,
+        "flex": 4.0,
+        "swing_harmonic": 0.22,
+        "bob_harmonic": 0.16,
+        "tilt_factor": 1.02,
+        "phase_offset": 0.55,
+    },
+    "windy": {"frames": 24, "duration": 50, "swing": 0.29, "bob": 5.0, "flex": 22.0},
+    "rain": {
+        "frames": 14,
+        "duration": 132,
+        "swing": 0.026,
+        "bob": 2.4,
+        "flex": 7.4,
+        "swing_harmonic": 0.30,
+        "bob_harmonic": 0.24,
+        "tilt_factor": 1.05,
+        "phase_offset": 0.25,
+        "wet": True,
+    },
+    "snow": {
+        "frames": 14,
+        "duration": 176,
+        "swing": 0.015,
+        "bob": 1.2,
+        "flex": 4.8,
+        "swing_harmonic": 0.18,
+        "bob_harmonic": 0.14,
+        "tilt_factor": 1.0,
+        "phase_offset": 1.05,
+        "snow": True,
+    },
+    "fog": {
+        "frames": 14,
+        "duration": 188,
+        "swing": 0.011,
+        "bob": 0.85,
+        "flex": 3.8,
+        "swing_harmonic": 0.16,
+        "bob_harmonic": 0.12,
+        "tilt_factor": 1.0,
+        "phase_offset": 1.45,
+        "fog": True,
+    },
+    "heat": {
+        "frames": 14,
+        "duration": 145,
+        "swing": 0.020,
+        "bob": 1.8,
+        "flex": 5.7,
+        "swing_harmonic": 0.24,
+        "bob_harmonic": 0.20,
+        "tilt_factor": 1.04,
+        "phase_offset": 0.85,
+        "hot": True,
+    },
+    "typhoon": {
+        "frames": 12,
+        "duration": 96,
+        "swing": 0.060,
+        "bob": 2.0,
+        "flex": 15.0,
+        "swing_harmonic": 0.45,
+        "bob_harmonic": 0.28,
+        "tilt_factor": 1.12,
+        "phase_offset": 0.10,
+        "missing": True,
+    },
     "severe_typhoon": {
         "frames": 12,
-        "duration": 115,
-        "swing": 0.045,
-        "bob": 1.0,
-        "flex": 13.0,
+        "duration": 78,
+        "swing": 0.085,
+        "bob": 2.5,
+        "flex": 19.0,
+        "swing_harmonic": 0.52,
+        "bob_harmonic": 0.34,
+        "tilt_factor": 1.18,
+        "phase_offset": 0.35,
         "missing": True,
         "severe": True,
     },
@@ -48,12 +117,16 @@ def render_state_frame(state: str, index: int, frames: int, config: dict) -> byt
         stone_tilt = swing * 1.18 + 0.05 * math.sin(t - 0.45)
     else:
         t = (math.tau * index) / frames
-        swing = config["swing"] * math.sin(t)
-        swing += config["swing"] * 0.35 * math.sin(2.0 * t - 0.6)
-        bob = config["bob"] * math.sin(t - 0.25)
-        bob += config["bob"] * 0.3 * math.sin(2.0 * t + 0.1)
-        rope_flex = config["flex"] * math.sin(t + math.pi / 2.0)
-        stone_tilt = swing * 1.08 + 0.014 * math.sin(t - 0.45)
+        phase_offset = config.get("phase_offset", 0.0)
+        swing_harmonic = config.get("swing_harmonic", 0.35)
+        bob_harmonic = config.get("bob_harmonic", 0.3)
+        tilt_factor = config.get("tilt_factor", 1.08)
+        swing = config["swing"] * math.sin(t + phase_offset)
+        swing += config["swing"] * swing_harmonic * math.sin(2.0 * t - 0.6 + phase_offset)
+        bob = config["bob"] * math.sin(t - 0.25 + phase_offset * 0.5)
+        bob += config["bob"] * bob_harmonic * math.sin(2.0 * t + 0.1 + phase_offset)
+        rope_flex = config["flex"] * math.sin(t + math.pi / 2.0 + phase_offset)
+        stone_tilt = swing * tilt_factor + 0.014 * math.sin(t - 0.45 + phase_offset)
 
     return render_base_stone(
         swing=swing,
