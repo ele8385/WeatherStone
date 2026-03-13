@@ -1,16 +1,22 @@
 <?xml version="1.0" encoding="utf-8"?>
 <animation-list xmlns:android="http://schemas.android.com/apk/res/android"
     android:oneshot="false">
-    <item android:drawable="@drawable/widget_stone_severe_typhoon_frame_00" android:duration="115" />
-    <item android:drawable="@drawable/widget_stone_severe_typhoon_frame_01" android:duration="115" />
-    <item android:drawable="@drawable/widget_stone_severe_typhoon_frame_02" android:duration="115" />
-    <item android:drawable="@drawable/widget_stone_severe_typhoon_frame_03" android:duration="115" />
-    <item android:drawable="@drawable/widget_stone_severe_typhoon_frame_04" android:duration="115" />
-    <item android:drawable="@drawable/widget_stone_severe_typhoon_frame_05" android:duration="115" />
-    <item android:drawable="@drawable/widget_stone_severe_typhoon_frame_06" android:duration="115" />
-    <item android:drawable="@drawable/widget_stone_severe_typhoon_frame_07" android:duration="115" />
-    <item android:drawable="@drawable/widget_stone_severe_typhoon_frame_08" android:duration="115" />
-    <item android:drawable="@drawable/widget_stone_severe_typhoon_frame_09" android:duration="115" />
-    <item android:drawable="@drawable/widget_stone_severe_typhoon_frame_10" android:duration="115" />
-    <item android:drawable="@drawable/widget_stone_severe_typhoon_frame_11" android:duration="115" />
+    <item android:drawable="@drawable/widget_stone_severe_typhoon_frame_00" android:duration="56" />
+    <item android:drawable="@drawable/widget_stone_severe_typhoon_frame_01" android:duration="56" />
+    <item android:drawable="@drawable/widget_stone_severe_typhoon_frame_02" android:duration="56" />
+    <item android:drawable="@drawable/widget_stone_severe_typhoon_frame_03" android:duration="56" />
+    <item android:drawable="@drawable/widget_stone_severe_typhoon_frame_04" android:duration="56" />
+    <item android:drawable="@drawable/widget_stone_severe_typhoon_frame_05" android:duration="56" />
+    <item android:drawable="@drawable/widget_stone_severe_typhoon_frame_06" android:duration="56" />
+    <item android:drawable="@drawable/widget_stone_severe_typhoon_frame_07" android:duration="56" />
+    <item android:drawable="@drawable/widget_stone_severe_typhoon_frame_08" android:duration="56" />
+    <item android:drawable="@drawable/widget_stone_severe_typhoon_frame_09" android:duration="56" />
+    <item android:drawable="@drawable/widget_stone_severe_typhoon_frame_10" android:duration="56" />
+    <item android:drawable="@drawable/widget_stone_severe_typhoon_frame_11" android:duration="56" />
+    <item android:drawable="@drawable/widget_stone_severe_typhoon_frame_12" android:duration="56" />
+    <item android:drawable="@drawable/widget_stone_severe_typhoon_frame_13" android:duration="56" />
+    <item android:drawable="@drawable/widget_stone_severe_typhoon_frame_14" android:duration="56" />
+    <item android:drawable="@drawable/widget_stone_severe_typhoon_frame_15" android:duration="56" />
+    <item android:drawable="@drawable/widget_stone_severe_typhoon_frame_16" android:duration="56" />
+    <item android:drawable="@drawable/widget_stone_severe_typhoon_frame_17" android:duration="56" />
 </animation-list>
