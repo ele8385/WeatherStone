@@ -48,6 +48,15 @@
             android:scaleType="fitCenter"
             android:visibility="gone" />
 
+        <ProgressBar
+            android:id="@+id/widget_anim"
+            style="?android:attr/progressBarStyleLarge"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:indeterminate="true"
+            android:indeterminateDrawable="@drawable/widget_stone_animation"
+            android:visibility="gone" />
+
         <TextView
             android:id="@+id/widget_placeholder"
             android:layout_width="wrap_content"

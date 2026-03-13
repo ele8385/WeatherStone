@@ -16,6 +16,9 @@ class WeatherStoneWidgetProvider : HomeWidgetProvider() {
     appWidgetIds: IntArray,
     widgetData: SharedPreferences,
   ) {
+    val animateWidget = widgetData.getBoolean(KEY_ANIMATE_WIDGET, false)
+    val imagePath = widgetData.getString("stone_image", null)
+
     appWidgetIds.forEach { widgetId ->
       val views = RemoteViews(context.packageName, R.layout.weatherstone_widget).apply {
         val launchIntent = HomeWidgetLaunchIntent.getActivity(context, MainActivity::class.java)
@@ -38,24 +41,34 @@ class WeatherStoneWidgetProvider : HomeWidgetProvider() {
           widgetData.getString("accessory_label", "맨돌") ?: "맨돌",
         )
 
-        val imagePath = widgetData.getString("stone_image", null)
-        if (imagePath != null) {
+        if (animateWidget) {
+          setViewVisibility(R.id.widget_anim, View.VISIBLE)
+          setViewVisibility(R.id.widget_image, View.GONE)
+          setViewVisibility(R.id.widget_placeholder, View.GONE)
+        } else if (imagePath != null) {
           val bitmap = BitmapFactory.decodeFile(imagePath)
           if (bitmap != null) {
             setImageViewBitmap(R.id.widget_image, bitmap)
             setViewVisibility(R.id.widget_image, View.VISIBLE)
+            setViewVisibility(R.id.widget_anim, View.GONE)
             setViewVisibility(R.id.widget_placeholder, View.GONE)
           } else {
             setViewVisibility(R.id.widget_image, View.GONE)
+            setViewVisibility(R.id.widget_anim, View.GONE)
             setViewVisibility(R.id.widget_placeholder, View.VISIBLE)
           }
         } else {
           setViewVisibility(R.id.widget_image, View.GONE)
+          setViewVisibility(R.id.widget_anim, View.GONE)
           setViewVisibility(R.id.widget_placeholder, View.VISIBLE)
         }
       }
 
       appWidgetManager.updateAppWidget(widgetId, views)
     }
+  }
+
+  companion object {
+    private const val KEY_ANIMATE_WIDGET = "animate_widget"
   }
 }

@@ -9,40 +9,64 @@ private let fallbackAccessory = "맨돌"
 
 struct WeatherStoneEntry: TimelineEntry {
   let date: Date
+  let frameIndex: Int
   let location: String
   let temperature: String
   let condition: String
   let accessory: String
+  let animate: Bool
 }
 
 struct WeatherStoneProvider: TimelineProvider {
   func placeholder(in context: Context) -> WeatherStoneEntry {
     WeatherStoneEntry(
       date: Date(),
+      frameIndex: 0,
       location: fallbackLocation,
       temperature: "18°C",
-      condition: fallbackCondition,
-      accessory: fallbackAccessory
+      condition: "살짝 흔들림",
+      accessory: fallbackAccessory,
+      animate: false
     )
   }
 
   func getSnapshot(in context: Context, completion: @escaping (WeatherStoneEntry) -> Void) {
-    completion(loadEntry(date: Date()))
+    completion(loadEntry(frameIndex: 0, date: Date()))
   }
 
   func getTimeline(in context: Context, completion: @escaping (Timeline<WeatherStoneEntry>) -> Void) {
-    let entry = loadEntry(date: Date())
-    completion(Timeline(entries: [entry], policy: .after(Date().addingTimeInterval(15 * 60))))
+    let defaults = UserDefaults(suiteName: widgetGroupId)
+    let animate = defaults?.bool(forKey: "animate_widget") ?? false
+    let frameCount = max(defaults?.integer(forKey: "frame_count") ?? 1, 1)
+    let now = Date()
+
+    let entries: [WeatherStoneEntry]
+    let policy: TimelineReloadPolicy
+
+    if animate {
+      let activeFrames = min(frameCount, 8)
+      entries = (0..<activeFrames).map { index in
+        loadEntry(frameIndex: index, date: now.addingTimeInterval(Double(index) * 0.5))
+      }
+      policy = .after(now.addingTimeInterval(Double(activeFrames) * 0.5))
+    } else {
+      entries = [loadEntry(frameIndex: 0, date: now)]
+      policy = .after(now.addingTimeInterval(15 * 60))
+    }
+
+    completion(Timeline(entries: entries, policy: policy))
   }
 
-  private func loadEntry(date: Date) -> WeatherStoneEntry {
+  private func loadEntry(frameIndex: Int, date: Date) -> WeatherStoneEntry {
     let defaults = UserDefaults(suiteName: widgetGroupId)
     return WeatherStoneEntry(
       date: date,
+      frameIndex: frameIndex,
       location: defaults?.string(forKey: "location_label") ?? fallbackLocation,
       temperature: defaults?.string(forKey: "temperature_label") ?? "--",
       condition: defaults?.string(forKey: "condition_label") ?? fallbackCondition,
-      accessory: defaults?.string(forKey: "accessory_label") ?? fallbackAccessory
+      accessory: defaults?.string(forKey: "accessory_label") ?? fallbackAccessory,
+      animate: defaults?.bool(forKey: "animate_widget") ?? false
     )
   }
 }
@@ -52,7 +76,8 @@ struct WeatherStoneWidgetView: View {
 
   private var imagePath: String? {
     let defaults = UserDefaults(suiteName: widgetGroupId)
-    return defaults?.string(forKey: "stone_image")
+    return defaults?.string(forKey: "stone_frame_\(entry.frameIndex)")
+      ?? defaults?.string(forKey: "stone_image")
   }
 
   var body: some View {
@@ -85,6 +110,8 @@ struct WeatherStoneWidgetView: View {
               .resizable()
               .scaledToFit()
               .frame(maxWidth: .infinity, maxHeight: .infinity)
+              .transition(.scale.combined(with: .opacity))
+              .contentTransition(.opacity)
           } else {
             Text("앱을 열어 돌을 준비해 주세요")
               .font(.caption)
@@ -136,7 +163,7 @@ struct WeatherStoneWidget: Widget {
       WeatherStoneWidgetView(entry: entry)
     }
     .configurationDisplayName("날씨 알려주는 돌")
-    .description("현재 날씨에 맞춰 바뀌는 돌 위젯")
+    .description("현재 날씨에 맞춰 흔들리고 바뀌는 돌 위젯")
     .supportedFamilies([.systemSmall, .systemMedium])
   }
 }
@@ -146,9 +173,11 @@ struct WeatherStoneWidget: Widget {
 } timeline: {
   WeatherStoneEntry(
     date: .now,
+    frameIndex: 0,
     location: fallbackLocation,
     temperature: "18°C",
-    condition: fallbackCondition,
-    accessory: "스튜디오 헤드폰"
+    condition: "살짝 흔들림",
+    accessory: "스튜디오 헤드폰",
+    animate: true
   )
 }

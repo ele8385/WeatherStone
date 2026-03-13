@@ -18,6 +18,7 @@ const _iosWidgetKind = 'WeatherStoneWidget';
 const _iosAppGroup = 'group.com.a11.weatherstone.weatherstone';
 const _androidInterstitialAdUnit = 'ca-app-pub-3940256099942544/1033173712';
 const _iosInterstitialAdUnit = 'ca-app-pub-3940256099942544/4411468910';
+const _widgetFramePhases = [0.0, 0.08, 0.16, 0.24, 0.5, 0.58, 0.66, 0.74];
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -84,6 +85,7 @@ class _WeatherStoneHomePageState extends State<WeatherStoneHomePage>
   WeatherSnapshot? _weather;
   String? _weatherError;
   Accessory _selectedAccessory = accessories.first;
+  bool _forceWidgetAnimation = false;
   bool _loadingWeather = true;
   bool _showingGuide = false;
   bool _isApplyingAccessory = false;
@@ -98,6 +100,7 @@ class _WeatherStoneHomePageState extends State<WeatherStoneHomePage>
     )..repeat();
     _adService = AdService()..preloadInterstitial();
     _selectedAccessory = widget.storage.loadAccessory();
+    _forceWidgetAnimation = widget.storage.forceWidgetAnimation;
     _boot();
   }
 
@@ -170,18 +173,36 @@ class _WeatherStoneHomePageState extends State<WeatherStoneHomePage>
       return;
     }
 
-    final widgetImagePath = await HomeWidget.renderFlutterWidget(
-      WidgetStoneCapture(
-        weather: weather,
-        accessory: _selectedAccessory,
-        phase: _sceneController.value,
-      ),
-      key: 'stone_image',
-      logicalSize: const Size(340, 420),
-      pixelRatio: 3,
-    );
+    final shouldAnimate = _forceWidgetAnimation || weather.shouldAnimateWidget;
+    final widgetPhases = shouldAnimate
+        ? _widgetFramePhases
+        : List<double>.filled(_widgetFramePhases.length, 0.25);
 
-    await HomeWidget.saveWidgetData<String>('stone_image', widgetImagePath);
+    String? firstFramePath;
+    for (var i = 0; i < widgetPhases.length; i++) {
+      final framePath = await HomeWidget.renderFlutterWidget(
+        WidgetStoneCapture(
+          weather: weather,
+          accessory: _selectedAccessory,
+          phase: widgetPhases[i],
+        ),
+        key: 'stone_frame_$i',
+        logicalSize: const Size(340, 420),
+        pixelRatio: 3,
+      );
+      firstFramePath ??= framePath;
+      await HomeWidget.saveWidgetData<String>('stone_frame_$i', framePath);
+    }
+
+    if (firstFramePath != null) {
+      await HomeWidget.saveWidgetData<String>('stone_image', firstFramePath);
+    }
+    await HomeWidget.saveWidgetData<bool>('animate_widget', shouldAnimate);
+    await HomeWidget.saveWidgetData<int>(
+      'frame_count',
+      _widgetFramePhases.length,
+    );
+    await HomeWidget.saveWidgetData<int>('frame_index', 0);
     await HomeWidget.saveWidgetData<String>(
       'location_label',
       weather.locationLabel,
@@ -192,7 +213,9 @@ class _WeatherStoneHomePageState extends State<WeatherStoneHomePage>
     );
     await HomeWidget.saveWidgetData<String>(
       'condition_label',
-      weather.widgetStatus,
+      _forceWidgetAnimation
+          ? '${weather.widgetStatus} · 테스트 흔들림'
+          : weather.widgetStatus,
     );
     await HomeWidget.saveWidgetData<String>(
       'accessory_label',
@@ -552,8 +575,59 @@ class _WeatherStoneHomePageState extends State<WeatherStoneHomePage>
             );
           },
         ),
+        const SizedBox(height: 14),
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: const Color(0xFF101820),
+            borderRadius: BorderRadius.circular(22),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      '위젯 애니메이션 테스트',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      '현재 바람이 없어도 홈 위젯에서 강제로 살짝 흔들리게 합니다.',
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.68),
+                        height: 1.4,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 12),
+              Switch.adaptive(
+                value: _forceWidgetAnimation,
+                onChanged: (value) => _setForceWidgetAnimation(value),
+              ),
+            ],
+          ),
+        ),
       ],
     );
+  }
+
+  Future<void> _setForceWidgetAnimation(bool value) async {
+    await widget.storage.setForceWidgetAnimation(value);
+    if (!mounted) {
+      return;
+    }
+    setState(() {
+      _forceWidgetAnimation = value;
+    });
+    await _syncWidget();
   }
 
   Widget _buildAccessorySection() {
@@ -759,6 +833,7 @@ class WidgetStoneCapture extends StatelessWidget {
         phase: phase,
         loading: false,
         showBackground: false,
+        exaggerateMotion: true,
       ),
     );
   }
@@ -772,6 +847,7 @@ class StoneScene extends StatelessWidget {
     required this.phase,
     required this.loading,
     required this.showBackground,
+    this.exaggerateMotion = false,
   });
 
   final WeatherSnapshot? weather;
@@ -779,6 +855,7 @@ class StoneScene extends StatelessWidget {
   final double phase;
   final bool loading;
   final bool showBackground;
+  final bool exaggerateMotion;
 
   @override
   Widget build(BuildContext context) {
@@ -794,17 +871,24 @@ class StoneScene extends StatelessWidget {
     final baseWave = math.sin(phase * math.pi * 2);
     final gustWave = math.sin((phase * math.pi * 2) + 1.1);
     final fastWave = math.sin((phase * math.pi * 4.6) - 0.35);
+    final motionBoost = exaggerateMotion ? 2.35 : 1.0;
     final ropeSwing =
-        (baseWave * (hasWind ? 0.06 : 0.025)) + (gustWave * 0.03 * windPower);
+        ((baseWave * (hasWind ? 0.06 : 0.025)) +
+            (gustWave * 0.03 * windPower)) *
+        motionBoost;
     final swing = isMissing
         ? 0.0
-        : (baseWave * (hasWind ? 0.11 : 0.035)) +
-              (gustWave * 0.04 * windPower) +
-              (fastWave * (hasWind ? 0.09 : 0.018));
+        : ((baseWave * (hasWind ? 0.11 : 0.035)) +
+                  (gustWave * 0.04 * windPower) +
+                  (fastWave * (hasWind ? 0.09 : 0.018))) *
+              motionBoost;
     final floatOffset =
-        (baseWave * (hasWind ? 8 : 4)) + (fastWave * (hasWind ? 3.5 : 1.4));
-    final accessoryFlutter =
-        hasWind ? math.sin((phase * math.pi * 2.8) + 0.6) * 0.14 : 0.0;
+        ((baseWave * (hasWind ? 8 : 4)) + (fastWave * (hasWind ? 3.5 : 1.4))) *
+        (exaggerateMotion ? 1.8 : 1.0);
+    final accessoryFlutter = hasWind
+        ? math.sin((phase * math.pi * 2.8) + 0.6) *
+              (exaggerateMotion ? 0.3 : 0.14)
+        : 0.0;
 
     return ClipRRect(
       borderRadius: BorderRadius.circular(showBackground ? 28 : 0),
@@ -1035,11 +1119,9 @@ class AccessoryOverlay extends StatelessWidget {
   final double phase;
   final double flutterAmount;
 
-  Widget _animatedAccessory({
-    required Widget child,
-    bool dramatic = false,
-  }) {
-    final drift = math.sin((phase * math.pi * 3.2) + 0.45) *
+  Widget _animatedAccessory({required Widget child, bool dramatic = false}) {
+    final drift =
+        math.sin((phase * math.pi * 3.2) + 0.45) *
         (dramatic ? 6.5 : 2.4) *
         flutterAmount.abs();
     return Transform.translate(
@@ -1122,9 +1204,7 @@ class AccessoryOverlay extends StatelessWidget {
             child: _animatedAccessory(
               child: SizedBox(
                 height: 92,
-                child: CustomPaint(
-                  painter: CapPainter(color: accessory.color),
-                ),
+                child: CustomPaint(painter: CapPainter(color: accessory.color)),
               ),
             ),
           ),
@@ -2000,10 +2080,14 @@ class AppStorage {
 
   static const _guideSeenKey = 'guide_seen';
   static const _accessoryKey = 'selected_accessory';
+  static const _forceWidgetAnimationKey = 'force_widget_animation';
 
   final SharedPreferences _preferences;
 
   bool get hasSeenGuide => _preferences.getBool(_guideSeenKey) ?? false;
+
+  bool get forceWidgetAnimation =>
+      _preferences.getBool(_forceWidgetAnimationKey) ?? false;
 
   Future<void> markGuideSeen() async {
     await _preferences.setBool(_guideSeenKey, true);
@@ -2019,6 +2103,10 @@ class AppStorage {
 
   Future<void> saveAccessory(String id) async {
     await _preferences.setString(_accessoryKey, id);
+  }
+
+  Future<void> setForceWidgetAnimation(bool value) async {
+    await _preferences.setBool(_forceWidgetAnimationKey, value);
   }
 }
 
@@ -2237,6 +2325,8 @@ class WeatherSnapshot {
   bool get isOverheated => apparentTemperature >= 33 && isSunny;
 
   bool get showHeatShimmer => apparentTemperature >= 31 && isSunny;
+
+  bool get shouldAnimateWidget => isWindy && !isTyphoon;
 
   String get temperatureLabel => '${temperature.round()}°C';
 
