@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/widget_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:gravity="center_horizontal"
+    android:orientation="vertical"
+    android:padding="12dp">
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="#6B000000"
+        android:gravity="center"
+        android:orientation="vertical"
+        android:paddingHorizontal="12dp"
+        android:paddingVertical="6dp">
+
+        <TextView
+            android:id="@+id/widget_location"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="#F8F6EF"
+            android:textSize="12sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/widget_temperature"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="#E6D5B3"
+            android:textSize="18sp"
+            android:textStyle="bold" />
+    </LinearLayout>
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:layout_marginTop="8dp"
+        android:layout_marginBottom="8dp">
+
+        <ImageView
+            android:id="@+id/widget_image"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:adjustViewBounds="true"
+            android:scaleType="fitCenter"
+            android:visibility="gone" />
+
+        <TextView
+            android:id="@+id/widget_placeholder"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:background="#55000000"
+            android:paddingHorizontal="10dp"
+            android:paddingVertical="6dp"
+            android:text="앱을 열어 돌을 준비해 주세요"
+            android:textColor="#F8F6EF"
+            android:textSize="12sp" />
+    </FrameLayout>
+
+    <TextView
+        android:id="@+id/widget_condition"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="#6B000000"
+        android:paddingHorizontal="12dp"
+        android:paddingVertical="5dp"
+        android:textColor="#F8F6EF"
+        android:textSize="12sp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/widget_accessory"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="6dp"
+        android:background="#5512191F"
+        android:paddingHorizontal="12dp"
+        android:paddingVertical="5dp"
+        android:textColor="#D2E9EC"
+        android:textSize="12sp" />
+</LinearLayout>
